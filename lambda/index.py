@@ -75,7 +75,7 @@ def lambda_handler(event, context):
         request_payload = {
             "prompt": bedrock_messages,
             "max_new_tokens": 512,
-            "do_sample"=True,
+            "do_sample":True,
             "stopSequences": [],
             "temperature": 0.7,
             "top_P": 0.9
