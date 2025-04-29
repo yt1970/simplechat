@@ -3,6 +3,7 @@ import json
 import os
 import boto3
 import re  # 正規表現モジュールをインポート
+import urllib.request
 from botocore.exceptions import ClientError
 
 
@@ -18,7 +19,8 @@ def extract_region_from_arn(arn):
 bedrock_client = None
 
 # モデルID
-MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
+# MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
+MODEL_ID = "https://4d94-34-34-98-90.ngrok-free.app"
 
 def lambda_handler(event, context):
     try:
@@ -82,12 +84,15 @@ def lambda_handler(event, context):
         
         print("Calling Bedrock invoke_model API with payload:", json.dumps(request_payload))
         
-        # invoke_model APIを呼び出し
-        response = bedrock_client.invoke_model(
-            modelId=MODEL_ID,
-            body=json.dumps(request_payload),
-            contentType="application/json"
-        )
+        # # invoke_model APIを呼び出し #FastAPIの呼び出し
+        url = f"{MODEL_ID}/generate"
+        with urllib.request.urlopen(url, data=json.dumps(request_payload).encode('utf-8')) as response:
+            response_body = json.loads(response.read().decode('utf-8'))
+        # response = bedrock_client.invoke_model(
+        #     modelId=MODEL_ID,
+        #     body=json.dumps(request_payload),
+        #     contentType="application/json"
+        # )
         
         # レスポンスを解析
         response_body = json.loads(response['body'].read())
