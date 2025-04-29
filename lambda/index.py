@@ -20,7 +20,7 @@ bedrock_client = None
 
 # モデルID
 # MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
-MODEL_ID = "https://8bec-34-125-145-18.ngrok-free.app"
+MODEL_ID = "https://fe2d-34-16-131-151.ngrok-free.app"
 
 def lambda_handler(event, context):
     try:
