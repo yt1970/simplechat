@@ -20,7 +20,7 @@ bedrock_client = None
 
 # モデルID
 # MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
-MODEL_ID = "https://4d94-34-34-98-90.ngrok-free.app"
+MODEL_ID = "https://8bec-34-125-145-18.ngrok-free.app"
 
 def lambda_handler(event, context):
     try:
@@ -41,7 +41,7 @@ def lambda_handler(event, context):
         
         # リクエストボディの解析
         body = json.loads(event['body'])
-        message = body['message']
+        message = body['prompt']
         conversation_history = body.get('conversationHistory', [])
         
         print("Processing message:", message)
@@ -73,13 +73,11 @@ def lambda_handler(event, context):
         
         # invoke_model用のリクエストペイロード
         request_payload = {
-            "messages": bedrock_messages,
-            "inferenceConfig": {
-                "maxTokens": 512,
-                "stopSequences": [],
-                "temperature": 0.7,
-                "topP": 0.9
-            }
+            "prompt": bedrock_messages,
+            "maxTokens": 512,
+            "stopSequences": [],
+            "temperature": 0.7,
+            "topP": 0.9
         }
         
         print("Calling Bedrock invoke_model API with payload:", json.dumps(request_payload))
