@@ -41,7 +41,7 @@ def lambda_handler(event, context):
         
         # リクエストボディの解析
         body = json.loads(event['body'])
-        message = body['generated_text']
+        message = body['message']
         conversation_history = body.get('conversationHistory', [])
         
         print("Processing message:", message)
@@ -56,24 +56,37 @@ def lambda_handler(event, context):
             "content": message
         })
         
-        # Nova Liteモデル用のリクエストペイロードを構築
+        # Nova Liteモデル用のリクエストペイロードを構築　<--FastAPI経由なので不要
         # 会話履歴を含める
-        bedrock_messages = []
-        for msg in messages:
-            if msg["role"] == "user":
-                bedrock_messages.append({
-                    "role": "user",
-                    "content": [{"text": msg["content"]}]
-                })
-            elif msg["role"] == "assistant":
-                bedrock_messages.append({
-                    "role": "assistant", 
-                    "content": [{"text": msg["content"]}]
-                })
+        # bedrock_messages = []
+        # for msg in messages:
+        #     if msg["role"] == "user":
+        #         bedrock_messages.append({
+        #             "role": "user",
+        #             "content": [{"text": msg["content"]}]
+        #         })
+        #     elif msg["role"] == "assistant":
+        #         bedrock_messages.append({
+        #             "role": "assistant", 
+        #             "content": [{"text": msg["content"]}]
+        #         })
         
-        # invoke_model用のリクエストペイロード
+        # リクエストペイロードの"prompt"に入れるstrを整形
+        prompt = ""
+        for msg in messages:
+            role = msg['role']
+            content = msg['content']
+            if role == 'user':
+                prompt += f"User: {content}\n"
+            elif role == 'assistant':
+                prompt += f"Assistant: {content}\n"
+                prompt += "Assistant:"  # モデルが続きを出力する準備
+
+        
+        # ×:invoke_model用のリクエストペイロード
+        # ○:FastAPI（Gemma3用）のリクエストペイロード
         request_payload = {
-            "prompt": bedrock_messages,
+            "prompt": prompt,
             "max_new_tokens": 512,
             "do_sample":True,
             "stopSequences": [],
@@ -83,12 +96,12 @@ def lambda_handler(event, context):
         
         print("Calling Bedrock invoke_model API with payload:", json.dumps(request_payload))
         
-        # # invoke_model APIを呼び出し #FastAPIの呼び出し
-        # # invoke_model APIを呼び出し #FastAPIの呼び出し
+        #○FastAPIの呼び出し
         url = f"{MODEL_ID}/generate"
         request_data = json.dumps(request_payload).encode('utf-8')
         request = urllib.request.Request(url, data=request_data, headers={'Content-Type': 'application/json'}, method='POST')
-
+        
+        # ×# invoke_model APIを呼び出し
         #url = f"{MODEL_ID}/generate"
         #with urllib.request.urlopen(url, data=json.dumps(request_payload).encode('utf-8')) as response:
         #    response_body = json.loads(response.read().decode('utf-8'))
@@ -97,26 +110,15 @@ def lambda_handler(event, context):
         #     body=json.dumps(request_payload),
         #     contentType="application/json"
         # )
+        
         # 応答を受け取る
         with urllib.request.urlopen(request) as response:
                 response_body = json.loads(response.read().decode('utf-8'))
+        
         # レスポンスを解析
         #response_body = json.loads(response['body'].read())
         print("Bedrock response:", json.dumps(response_body, default=str))
 
-        # url = f"{MODEL_ID}/generate"
-        # with urllib.request.urlopen(url, data=json.dumps(request_payload).encode('utf-8')) as response:
-        #     response_body = json.loads(response.read().decode('utf-8'))
-        # response = bedrock_client.invoke_model(
-        #     modelId=MODEL_ID,
-        #     body=json.dumps(request_payload),
-        #     contentType="application/json"
-        # )
-        
-        # # レスポンスを解析
-        # response_body = json.loads(response['body'].read())
-        # print("Bedrock response:", json.dumps(response_body, default=str))
-        
         # 応答の検証
         if 'generated_text' not in response_body:
             raise Exception("No 'generated_text' in the response")
