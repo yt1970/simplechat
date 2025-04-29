@@ -41,7 +41,7 @@ def lambda_handler(event, context):
         
         # リクエストボディの解析
         body = json.loads(event['body'])
-        message = body['prompt']
+        message = body['generated_text']
         conversation_history = body.get('conversationHistory', [])
         
         print("Processing message:", message)
