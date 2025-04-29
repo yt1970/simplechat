@@ -84,22 +84,45 @@ def lambda_handler(event, context):
         print("Calling Bedrock invoke_model API with payload:", json.dumps(request_payload))
         
         # # invoke_model APIを呼び出し #FastAPIの呼び出し
+        # # invoke_model APIを呼び出し #FastAPIの呼び出し
         url = f"{MODEL_ID}/generate"
-        with urllib.request.urlopen(url, data=json.dumps(request_payload).encode('utf-8')) as response:
-            response_body = json.loads(response.read().decode('utf-8'))
+        request_data = json.dumps(request_payload).encode('utf-8')
+        request = urllib.request.Request(url, data=request_data, headers={'Content-Type': 'application/json'}, method='POST')
+
+        #url = f"{MODEL_ID}/generate"
+        #with urllib.request.urlopen(url, data=json.dumps(request_payload).encode('utf-8')) as response:
+        #    response_body = json.loads(response.read().decode('utf-8'))
+        # response = bedrock_client.invoke_model(
+        #     modelId=MODEL_ID,
+        #     body=json.dumps(request_payload),
+        #     contentType="application/json"
+        # )
+        # 応答を受け取る
+        with urllib.request.urlopen(request) as response:
+                response_body = json.loads(response.read().decode('utf-8'))
+        # レスポンスを解析
+        #response_body = json.loads(response['body'].read())
+        print("Bedrock response:", json.dumps(response_body, default=str))
+
+        # url = f"{MODEL_ID}/generate"
+        # with urllib.request.urlopen(url, data=json.dumps(request_payload).encode('utf-8')) as response:
+        #     response_body = json.loads(response.read().decode('utf-8'))
         # response = bedrock_client.invoke_model(
         #     modelId=MODEL_ID,
         #     body=json.dumps(request_payload),
         #     contentType="application/json"
         # )
         
-        # レスポンスを解析
-        response_body = json.loads(response['body'].read())
-        print("Bedrock response:", json.dumps(response_body, default=str))
+        # # レスポンスを解析
+        # response_body = json.loads(response['body'].read())
+        # print("Bedrock response:", json.dumps(response_body, default=str))
         
         # 応答の検証
-        if not response_body.get('output') or not response_body['output'].get('message') or not response_body['output']['message'].get('content'):
-            raise Exception("No response content from the model")
+        if 'generated_text' not in response_body:
+            raise Exception("No 'generated_text' in the response")
+        assistant_response = response_body['generated_text']
+        # if not response_body.get('output') or not response_body['output'].get('message') or not response_body['output']['message'].get('content'):
+        #     raise Exception("No response content from the model")
         
         # アシスタントの応答を取得
         assistant_response = response_body['output']['message']['content'][0]['text']
