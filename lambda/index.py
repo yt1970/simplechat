@@ -72,15 +72,15 @@ def lambda_handler(event, context):
         #         })
         
         # リクエストペイロードの"prompt"に入れるstrを整形
-        prompt = ""
+        prompt = "以下は日本語でのユーザーとアシスタントの会話です。フレンドリーな調子で行きましょう！！\n"
         for msg in messages:
             role = msg['role']
             content = msg['content']
             if role == 'user':
-                prompt += f"User: {content}\n"
+                prompt += f"ユーザー: {content}\n"
             elif role == 'assistant':
-                prompt += f"Assistant: {content}\n"
-                prompt += "Assistant:"  # モデルが続きを出力する準備
+                prompt += f"アシスタント: {content}\n"
+        prompt += "アシスタント:"  # モデルが続きを出力する準備
 
         
         # ×:invoke_model用のリクエストペイロード
